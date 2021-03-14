@@ -2,13 +2,13 @@
   "name": "gameengine",
   "version": "1.0.0",
   "description": "",
-  "main": "main.js",
+  "main": "./src/index.ts",
   "scripts": {
     "start": "webpack-dev-server"
   },
   "repository": {
     "type": "git",
-    "url": "https://gitee.com/Wander_Wang/mygameengine18.git"
+    "url": "https://gitee.com/scyq/mygameengine"
   },
   "author": "",
   "license": "ISC",
