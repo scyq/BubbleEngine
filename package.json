@@ -4,7 +4,22 @@
   "description": "",
   "main": "./src/index.ts",
   "scripts": {
-    "start": "webpack-dev-server"
+    "start": "webpack-dev-server",
+    "test": "jest"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js"
+    ],
+    "setupFiles": [
+      "jest-canvas-mock"
+    ],
+    "transform": {
+      "\\.(ts|tsx)$": "ts-jest"
+    },
+    "testRegex": "/tests/.*.spec\\.(ts|tsx)$"
   },
   "repository": {
     "type": "git",
@@ -13,6 +28,10 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/jest": "^26.0.21",
+    "jest": "^26.6.3",
+    "jest-canvas-mock": "^2.3.1",
+    "ts-jest": "^26.5.4",
     "ts-loader": "^8.0.17",
     "typescript": "^4.2.2",
     "webpack": "^5.24.2",

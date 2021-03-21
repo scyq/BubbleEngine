@@ -1,8 +1,8 @@
-import GameEngine from './engine';
+import { GameEngine, GameObject, Bitmap } from './engine';
 
 const engine: GameEngine = new GameEngine();
 const sceneConfig = [
-    { type: 'bitmap', properties: { x: 0, y: 0, source: './assets/earth.png' } },
+    { type: 'bitmap', id: "earth", properties: { x: 0, y: 0, source: './assets/earth.png' } },
     { type: 'bitmap', properties: { x: 0, y: 0, source: './assets/moon.png' } },
     { type: 'bitmap', properties: { x: 0, y: 0, source: './assets/sun.png' } },
     { type: 'textfield', properties: { x: 0, y: 0, text: '我做的都是动画，这要臣妾怎么办？', color: '#ffffff' } },
@@ -15,5 +15,40 @@ for (let config of sceneConfig) {
         images.push(config['properties']['source']);
     }
 }
-console.log(images);
+
+let move: Move;
+
+engine.onStart = () => {
+    const bitmap = engine.getGameObjecet("earth") as Bitmap;
+    move = new Move(bitmap, 100);
+}
+
+engine.onUpdate = (deltaTime) => {
+
+}
+
+engine.onTick = () => {
+    move.tick();
+}
+
 engine.start(images, sceneConfig);
+
+class Move {
+    private totalTime: number = 0;
+    private initX = 0;
+    private initY = 0;
+
+    constructor(private gameObject: GameObject, private speed: number) {
+        this.initX = gameObject.x;
+        this.initY = gameObject.y;
+    }
+
+    tweenUpdate(deltaTime: number) {
+        this.totalTime += deltaTime;
+        this.gameObject.x = this.initX + this.totalTime / 1000 * this.speed;
+    }
+
+    tick() {
+        this.gameObject.x += 1;
+    }
+}

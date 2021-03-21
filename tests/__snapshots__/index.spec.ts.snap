@@ -1,0 +1,67 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`GameEngine TextField render 1`] = `
+Array [
+  Object {
+    "props": Object {
+      "maxWidth": null,
+      "text": "Hello,World",
+      "x": 0,
+      "y": 20,
+    },
+    "transform": Array [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fillText",
+  },
+]
+`;
+
+exports[`GameEngine TextField render-1 1`] = `
+Array [
+  Object {
+    "props": Object {
+      "maxWidth": null,
+      "text": "Hello, World",
+      "x": 0,
+      "y": 20,
+    },
+    "transform": Array [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fillText",
+  },
+]
+`;
+
+exports[`GameEngine TextField render-2 1`] = `
+Array [
+  Object {
+    "props": Object {
+      "maxWidth": null,
+      "text": "Hello, World",
+      "x": 0,
+      "y": 20,
+    },
+    "transform": Array [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fillText",
+  },
+]
+`;

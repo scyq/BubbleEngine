@@ -2,9 +2,6 @@ const magicNumber = {
     textOffset: 20 /** 文字的偏移量，改变锚点 */
 }
 
-/**
- * 渲染件的基类
- */
 export abstract class GameObject {
     x: number = 0;
     y: number = 0;
@@ -23,7 +20,7 @@ export abstract class GameObject {
 export class Bitmap extends GameObject {
 
     public source: string;
-    render(context: CanvasRenderingContext2D) {
+    render(context: CanvasRenderingContext2D): void {
         const image = getImage(this.source);
         if (image) {
             context.drawImage(image, this.x, this.y);
@@ -37,7 +34,7 @@ export class Rectangle extends GameObject {
     public width: number = 100;
     public height: number = 100;
 
-    render(context: CanvasRenderingContext2D) {
+    render(context: CanvasRenderingContext2D): void {
         context.save();
         context.fillStyle = this.color;
         context.fillRect(this.x, this.y, this.width, this.height);
@@ -50,7 +47,12 @@ export class TextField extends GameObject {
     public color: string = '#000000';
     public text: string = '';
 
-    render(context: CanvasRenderingContext2D) {
+    constructor(text?: string) {
+        super();
+        this.text = text;
+    }
+
+    render(context: CanvasRenderingContext2D): void {
         context.save();
         context.fillStyle = this.color;
         context.fillText(this.text, this.x, this.y + magicNumber.textOffset);
@@ -58,13 +60,7 @@ export class TextField extends GameObject {
     }
 }
 
-/**
- * 创建一个新的GameObject
- * 
- * @param type GameObject类型
- * @param properties GameObject具体参数
- */
-function createGameObject(type: string, properties: any) {
+function createGameObject(type: string, properties: any): GameObject {
     let gameObject: GameObject;
     switch (type) {
         case 'rectangle':
@@ -73,9 +69,8 @@ function createGameObject(type: string, properties: any) {
             gameObject = rect;
             break;
         case 'textfield':
-            const textfiled = new TextField();
+            const textfiled = new TextField(properties.text || '');
             textfiled.color = properties.color || '#000000';
-            textfiled.text = properties.text || '';
             gameObject = textfiled;
             break;
         case 'bitmap':
@@ -92,16 +87,7 @@ function createGameObject(type: string, properties: any) {
     return gameObject;
 }
 
-
-/** 用于存储需要加载的图片的哈希表 */
 const imagesStorage: any = {};
-
-/**
- * 加载一张图片
- * 
- * @param url 图片的本地路径，推荐使用绝对路径
- * @param onLoad 回调函数
- */
 
 function loadImage(url: string, onLoad: Function): void {
     const image = new Image();
@@ -111,12 +97,6 @@ function loadImage(url: string, onLoad: Function): void {
     };
 }
 
-/**
- * 加载多张图片
- * 
- * @param urls 每张图片的本地路径，推荐使用绝对路径
- * @param onLoad 回调函数，该函数在每张图片加载完毕都会调用
- */
 function loadMultiImages(urls: string[], onLoad: Function): void {
     if (urls.length < 1) {
         onLoad();
@@ -134,50 +114,87 @@ function loadMultiImages(urls: string[], onLoad: Function): void {
     }
 }
 
-/**
- * 获取一张图片，注意必须先加载
- * 
- * @param url 图片的本地路径，传入加载图片时使用的图片路径
- */
-function getImage(url: string) {
+function getImage(url: string): ImageBitmap {
     return imagesStorage[url];
 }
 
-export default class GameEngine {
+export class GameEngine {
 
-    /** 所有需要渲染的GameObject */
+    private fps: number = 60;
+    private mileSecondPerFrame: number = 1000 / this.fps;
+    private iterationCurrentTime: number = 0;
+
+
+    public onTick?: () => void;
+    public onUpdate?: (deltaTime: number) => void;
+    public onStart?: () => void;
+
+    private lastTime: number = 0;
+
     private renderList: GameObject[] = [];
+    private gameObjects: { [id: string]: GameObject } = {};
 
-    /** 添加需要渲染的GameObject */
-    private addGameObject(gameObject: GameObject) {
+    public addGameObject(gameObject: GameObject): void {
         this.renderList.push(gameObject);
     }
 
-    private loadScene(sceneConfig: any) {
-        for (let config of sceneConfig) {
-            const object = createGameObject(config.type, config.properties);
-            this.addGameObject(object);
-        }
-        this.render();
+    public getGameObjecet(id: string): GameObject {
+        return this.gameObjects[id];
     }
 
-    private render() {
+    private enterFrame(advancedTime: number) {
+        const deltaTime = advancedTime - this.lastTime;
+        this.lastTime = advancedTime;
+        this.onEnterFrame(deltaTime);
+        requestAnimationFrame(advancedTime => this.enterFrame(advancedTime));
+    }
+
+    private loadScene(sceneConfig: any): void {
+        for (let config of sceneConfig) {
+            const object = createGameObject(config.type, config.properties);
+            if (config.id) {
+                this.gameObjects[config.id] = object;
+            }
+            this.addGameObject(object);
+        }
+    }
+
+    private onEnterFrame(deltaTime: number) {
         const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
         const context = canvas.getContext('2d');
+        context.clearRect(0, 0, canvas.width, canvas.height);
+
+        this.iterationCurrentTime += deltaTime;
+        while (this.iterationCurrentTime >= this.mileSecondPerFrame) {
+            this.iterationCurrentTime -= this.mileSecondPerFrame;
+            if (this.onTick) {
+                this.onTick();
+            }
+        }
+        if (this.onUpdate) {
+            this.onUpdate(deltaTime);
+        }
+        this.draw(context);
+    }
+
+    public draw(context: CanvasRenderingContext2D): void {
         for (const gameObject of this.renderList) {
             gameObject.draw(context);
         }
     }
 
-    /**
-     * 启动引擎
-     * 
-     * @param images 需要加载的图片，推荐使用绝对路径
-     * @param sceneConfig 场景渲染配置信息
-     */
-    public start (images: string[], sceneConfig) {
+    public start(images: string[], sceneConfig: any, onComplete?: Function): void {
+        const initialTime = Date.now();
         loadMultiImages(images, () => {
             this.loadScene(sceneConfig);
+            if (this.onStart) {
+                this.onStart();
+            }
+            const advancedTime = Date.now() - initialTime;
+            this.enterFrame(advancedTime);
+            if (onComplete) {
+                onComplete();
+            }
         });
     }
 }
