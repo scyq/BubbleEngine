@@ -1,20 +1,54 @@
+const canvas = document.getElementById('game') as HTMLCanvasElement;
+const context = canvas.getContext('2d');
+
 const magicNumber = {
     textOffset: 20 /** 文字的偏移量，改变锚点 */
 }
+
+const imagesStorage: any = {};
+
+function getImage(url: string): ImageBitmap {
+    return imagesStorage[url];
+}
+
+function loadImage(url: string, onLoad: Function): void {
+    const image = new Image();
+    image.src = url;
+    image.onload = function () {
+        imagesStorage[url] = image;
+        onLoad(image);
+    };
+}
+
+function loadMultiImages(urls: string[], onLoad: Function): void {
+    if (urls.length < 1) {
+        onLoad();
+        return;
+    }
+    let count = 0;
+    for (const url of urls) {
+        loadImage(url, image => {
+            count++;
+            imagesStorage[url] = image;
+            if (count === urls.length) {
+                onLoad();
+            }
+        });
+    }
+}
+
 
 export abstract class GameObject {
     x: number = 0;
     y: number = 0;
     alpha: number = 1;
 
-    /** 根据具体数值渲染 */
     draw(context: CanvasRenderingContext2D) {
         context.globalAlpha = this.alpha;
         this.render(context);
     }
 
-    /** 按照特定地方式渲染该GameObject */
-    abstract render(context: CanvasRenderingContext2D);
+    abstract render(context: CanvasRenderingContext2D): void;
 }
 
 export class Bitmap extends GameObject {
@@ -60,64 +94,6 @@ export class TextField extends GameObject {
     }
 }
 
-function createGameObject(type: string, properties: any): GameObject {
-    let gameObject: GameObject;
-    switch (type) {
-        case 'rectangle':
-            const rect = new Rectangle();
-            rect.color = properties.color || '#000000';
-            gameObject = rect;
-            break;
-        case 'textfield':
-            const textfiled = new TextField(properties.text || '');
-            textfiled.color = properties.color || '#000000';
-            gameObject = textfiled;
-            break;
-        case 'bitmap':
-            const bitmap = new Bitmap();
-            bitmap.source = properties.source || '';
-            gameObject = bitmap;
-            break;
-        default:
-            throw Error;
-    }
-    gameObject.x = properties.x || 0;
-    gameObject.y = properties.y || 0;
-    gameObject.alpha = properties.hasOwnProperty('alpha') ? properties.alpha : 1;
-    return gameObject;
-}
-
-const imagesStorage: any = {};
-
-function loadImage(url: string, onLoad: Function): void {
-    const image = new Image();
-    image.src = url;
-    image.onload = function () {
-        onLoad(image);
-    };
-}
-
-function loadMultiImages(urls: string[], onLoad: Function): void {
-    if (urls.length < 1) {
-        onLoad();
-        return;
-    }
-    let count = 0;
-    for (const url of urls) {
-        loadImage(url, image => {
-            count++;
-            imagesStorage[url] = image;
-            if (count === urls.length) {
-                onLoad();
-            }
-        });
-    }
-}
-
-function getImage(url: string): ImageBitmap {
-    return imagesStorage[url];
-}
-
 export class GameEngine {
 
     private fps: number = 60;
@@ -142,6 +118,33 @@ export class GameEngine {
         return this.gameObjects[id];
     }
 
+    createGameObject(type: string, properties: any): GameObject {
+        let gameObject: GameObject;
+        switch (type) {
+            case 'rectangle':
+                const rect = new Rectangle();
+                rect.color = properties.color || '#000000';
+                gameObject = rect;
+                break;
+            case 'textfield':
+                const textfiled = new TextField(properties.text || '');
+                textfiled.color = properties.color || '#000000';
+                gameObject = textfiled;
+                break;
+            case 'bitmap':
+                const bitmap = new Bitmap();
+                bitmap.source = properties.source || '';
+                gameObject = bitmap;
+                break;
+            default:
+                throw Error;
+        }
+        gameObject.x = properties.x || 0;
+        gameObject.y = properties.y || 0;
+        gameObject.alpha = properties.hasOwnProperty('alpha') ? properties.alpha : 1;
+        return gameObject;
+    }
+
     private enterFrame(advancedTime: number) {
         const deltaTime = advancedTime - this.lastTime;
         this.lastTime = advancedTime;
@@ -151,7 +154,7 @@ export class GameEngine {
 
     private loadScene(sceneConfig: any): void {
         for (let config of sceneConfig) {
-            const object = createGameObject(config.type, config.properties);
+            const object = this.createGameObject(config.type, config.properties);
             if (config.id) {
                 this.gameObjects[config.id] = object;
             }
@@ -160,8 +163,6 @@ export class GameEngine {
     }
 
     private onEnterFrame(deltaTime: number) {
-        const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
-        const context = canvas.getContext('2d');
         context.clearRect(0, 0, canvas.width, canvas.height);
 
         this.iterationCurrentTime += deltaTime;
