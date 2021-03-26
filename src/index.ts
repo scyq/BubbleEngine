@@ -1,4 +1,4 @@
-import { GameEngine, GameObject, Bitmap } from './engine';
+import { GameEngine } from './engine';
 
 const engine: GameEngine = new GameEngine();
 const sceneConfig = [
@@ -16,11 +16,10 @@ for (let config of sceneConfig) {
     }
 }
 
-let move: Move;
+// let move: Move;
 
 engine.onStart = () => {
-    const bitmap = engine.getGameObjecet("earth") as Bitmap;
-    move = new Move(bitmap, 100);
+
 }
 
 engine.onUpdate = (deltaTime) => {
@@ -28,27 +27,29 @@ engine.onUpdate = (deltaTime) => {
 }
 
 engine.onTick = () => {
-    move.tick();
+    // move.tick();
 }
+
+engine.test();
 
 engine.start(images, sceneConfig);
 
-class Move {
-    private totalTime: number = 0;
-    private initX = 0;
-    private initY = 0;
+// class Move {
+//     private totalTime: number = 0;
+//     private initX = 0;
+//     private initY = 0;
 
-    constructor(private gameObject: GameObject, private speed: number) {
-        this.initX = gameObject.x;
-        this.initY = gameObject.y;
-    }
+//     constructor(private gameObject: GameObject, private speed: number) {
+//         this.initX = gameObject.x;
+//         this.initY = gameObject.y;
+//     }
 
-    tweenUpdate(deltaTime: number) {
-        this.totalTime += deltaTime;
-        this.gameObject.x = this.initX + this.totalTime / 1000 * this.speed;
-    }
+//     tweenUpdate(deltaTime: number) {
+//         this.totalTime += deltaTime;
+//         this.gameObject.x = this.initX + this.totalTime / 1000 * this.speed;
+//     }
 
-    tick() {
-        this.gameObject.x += 1;
-    }
-}
+//     tick() {
+//         this.gameObject.x += 1;
+//     }
+// }

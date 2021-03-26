@@ -1,5 +1,7 @@
+import { GameObject } from './components';
+import { Matrix4, mutiply } from './math';
 const canvas = document.getElementById('game') as HTMLCanvasElement;
-const context = canvas.getContext('2d');
+const gl = canvas.getContext('webgl2');
 
 const magicNumber = {
     textOffset: 20 /** 文字的偏移量，改变锚点 */
@@ -37,63 +39,6 @@ function loadMultiImages(urls: string[], onLoad: Function): void {
     }
 }
 
-
-export abstract class GameObject {
-    x: number = 0;
-    y: number = 0;
-    alpha: number = 1;
-
-    draw(context: CanvasRenderingContext2D) {
-        context.globalAlpha = this.alpha;
-        this.render(context);
-    }
-
-    abstract render(context: CanvasRenderingContext2D): void;
-}
-
-export class Bitmap extends GameObject {
-
-    public source: string;
-    render(context: CanvasRenderingContext2D): void {
-        const image = getImage(this.source);
-        if (image) {
-            context.drawImage(image, this.x, this.y);
-        }
-    }
-}
-
-export class Rectangle extends GameObject {
-
-    public color: string = '#000000';
-    public width: number = 100;
-    public height: number = 100;
-
-    render(context: CanvasRenderingContext2D): void {
-        context.save();
-        context.fillStyle = this.color;
-        context.fillRect(this.x, this.y, this.width, this.height);
-        context.restore();
-    }
-}
-
-export class TextField extends GameObject {
-
-    public color: string = '#000000';
-    public text: string = '';
-
-    constructor(text?: string) {
-        super();
-        this.text = text;
-    }
-
-    render(context: CanvasRenderingContext2D): void {
-        context.save();
-        context.fillStyle = this.color;
-        context.fillText(this.text, this.x, this.y + magicNumber.textOffset);
-        context.restore();
-    }
-}
-
 export class GameEngine {
 
     private fps: number = 60;
@@ -121,21 +66,6 @@ export class GameEngine {
     createGameObject(type: string, properties: any): GameObject {
         let gameObject: GameObject;
         switch (type) {
-            case 'rectangle':
-                const rect = new Rectangle();
-                rect.color = properties.color || '#000000';
-                gameObject = rect;
-                break;
-            case 'textfield':
-                const textfiled = new TextField(properties.text || '');
-                textfiled.color = properties.color || '#000000';
-                gameObject = textfiled;
-                break;
-            case 'bitmap':
-                const bitmap = new Bitmap();
-                bitmap.source = properties.source || '';
-                gameObject = bitmap;
-                break;
             default:
                 throw Error;
         }
@@ -163,7 +93,7 @@ export class GameEngine {
     }
 
     private onEnterFrame(deltaTime: number) {
-        context.clearRect(0, 0, canvas.width, canvas.height);
+        // gl.clearRect(0, 0, canvas.width, canvas.height);
 
         this.iterationCurrentTime += deltaTime;
         while (this.iterationCurrentTime >= this.mileSecondPerFrame) {
@@ -175,12 +105,12 @@ export class GameEngine {
         if (this.onUpdate) {
             this.onUpdate(deltaTime);
         }
-        this.draw(context);
+        this.draw(gl);
     }
 
-    public draw(context: CanvasRenderingContext2D): void {
+    public draw(gl: WebGL2RenderingContext): void {
         for (const gameObject of this.renderList) {
-            gameObject.draw(context);
+            gameObject.draw(gl);
         }
     }
 
@@ -197,5 +127,15 @@ export class GameEngine {
                 onComplete();
             }
         });
+    }
+
+    public test() {
+        const a = new Matrix4([
+            1, 2, 3, 4,
+            5, 6, 7, 8,
+            8, 7, 6, 5,
+            4, 3, 2, 1
+        ]);
+        console.log(mutiply(a, a).matrix);
     }
 }
