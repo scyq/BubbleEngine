@@ -15,7 +15,7 @@ export abstract class GameObject {
 
 export class Rectangle {
 
-    verties: Array<Vector2>;
+    verties: Array<Vector2> = [];
     height: number;
     width: number;
 

@@ -1,5 +1,5 @@
 import { GameObject } from './components';
-import { Matrix4, mutiply } from './math';
+import { Camera, Renderer } from './render';
 const canvas = document.getElementById('game') as HTMLCanvasElement;
 const gl = canvas.getContext('webgl2');
 
@@ -130,12 +130,8 @@ export class GameEngine {
     }
 
     public test() {
-        const a = new Matrix4([
-            1, 2, 3, 4,
-            5, 6, 7, 8,
-            8, 7, 6, 5,
-            4, 3, 2, 1
-        ]);
-        console.log(mutiply(a, a).matrix);
+        const camera = new Camera();
+        const renderer = new Renderer(gl);
+        renderer.render(camera);
     }
 }

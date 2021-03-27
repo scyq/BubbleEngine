@@ -1,14 +1,15 @@
-import { flatArrary, Matrix4, Vector2 } from "./math";
+import { Rectangle } from "./components";
+import { flatArray, Matrix4, Vector2, perspProjectionMatrix, baseTranlate } from "./math";
 
-class Camera {
+export class Camera {
     static PERSPECTIVE: number = 0;
     static ORTHOGRAPHIC: number = 1;
 
-    private type: number;
-    private fov: number;    // Field of View in Radian
-    private aspect: number;
-    private zNear: number;
-    private zFar: number;
+    type: number;
+    fov: number;    // Field of View in Radian
+    aspect: number;
+    zNear: number;
+    zFar: number;
     projectionMatrix: Matrix4;
 
     constructor(
@@ -32,7 +33,7 @@ class Camera {
 
 }
 
-class Render {
+export class Renderer {
 
     private gl: WebGL2RenderingContext;
 
@@ -58,7 +59,8 @@ class Render {
                 uniform mat4 uProjectionMatrix;
         
                 void main() {
-                gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
+                    gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
+                }
             `;
         }
         if (fsSource) {
@@ -88,7 +90,7 @@ class Render {
     }
 
     // 创建着色程序
-    private initShaderProgram(vsSource?: string, fsSource?: string): WebGLProgram {
+    private initShaderProgram(): WebGLProgram {
         const vertexShader = this.loadShader(this.gl.VERTEX_SHADER, this.vsSource);
         const fragmentShader = this.loadShader(this.gl.FRAGMENT_SHADER, this.fsSource);
 
@@ -107,17 +109,94 @@ class Render {
     }
 
     // 2D顶点缓冲器
-    public initBuffers2D(vertices: Array<Vector2>): any {
+    private initBuffers2D(vertices: Array<Vector2>): WebGLBuffer {
+        console.log(new Float32Array(flatArray(vertices)));
         const positionBuffer = this.gl.createBuffer();
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, positionBuffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(flatArrary(vertices)), this.gl.STATIC_DRAW);
-
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(flatArray(vertices)), this.gl.STATIC_DRAW);
         return {
             position: positionBuffer
         }
     }
 
-    public renderScene() {
+    private drawScene(camera: Camera, programInfo: any, buffers: WebGLBuffer) {
+        this.gl.clearColor(0, 0, 0, 1);
+        this.gl.clearDepth(1); // clear everything
+        this.gl.enable(this.gl.DEPTH_TEST);
+        this.gl.depthFunc(this.gl.LEQUAL);
 
+        this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+
+
+        // 正交投影先不考虑，先只考虑了透视投影
+        let projection = perspProjectionMatrix(
+            camera.fov,
+            camera.aspect,
+            camera.zNear,
+            camera.zFar
+        );
+
+        let modelViewMatrix = new Matrix4();
+        modelViewMatrix = baseTranlate([0, 0, -6], modelViewMatrix);
+
+        {
+            const numComponents = 2;
+            const type = this.gl.FLOAT;
+            const normalize = false;
+            const stride = 0;
+            const offset = 0;
+            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffers['position']);
+            this.gl.vertexAttribPointer(
+                programInfo.attribLocations.vertexPosition,
+                numComponents,
+                type,
+                normalize,
+                stride,
+                offset
+            );
+            this.gl.enableVertexAttribArray(
+                programInfo.attribLocations.vertexPosition);
+        }
+
+
+        this.gl.useProgram(programInfo.program);
+
+        // set shader uniforms
+        this.gl.uniformMatrix4fv(
+            programInfo.uniformLocations.projectionMatrix,
+            false,
+            projection.matrix);
+        this.gl.uniformMatrix4fv(
+            programInfo.uniformLocations.modelViewMatrix,
+            false,
+            modelViewMatrix.matrix);
+
+        {
+            const offset = 0;
+            const vertexCount = 4;
+            this.gl.drawArrays(this.gl.TRIANGLE_STRIP, offset, vertexCount);
+        }
+    }
+
+    public render(camera: Camera) {
+        const shaderProgram = this.initShaderProgram();
+
+        const programInfo = {
+            program: shaderProgram,
+            attribLocations: {
+                vertexPosition: this.gl.getAttribLocation(shaderProgram, 'aVertexPosition'),
+            },
+            uniformLocations: {
+                projectionMatrix: this.gl.getUniformLocation(shaderProgram, 'uProjectionMatrix'),
+                modelViewMatrix: this.gl.getUniformLocation(shaderProgram, 'uModelViewMatrix'),
+            },
+        };
+
+        let a = new Vector2(-1, 1);
+        let c = new Vector2(1, -1);
+        let square = new Rectangle(a, c);
+        const buffers = this.initBuffers2D(square.verties);
+
+        this.drawScene(camera, programInfo, buffers);
     }
 }

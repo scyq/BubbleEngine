@@ -32,7 +32,7 @@ engine.onTick = () => {
 
 engine.test();
 
-engine.start(images, sceneConfig);
+// engine.start(images, sceneConfig);
 
 // class Move {
 //     private totalTime: number = 0;

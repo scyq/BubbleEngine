@@ -284,7 +284,7 @@ function rotateZ(angle: number): Matrix4 {
 }
 
 // 二维数组扁平化
-export function flatArrary(arr: Array<Vector>): Array<number> {
+export function flatArray(arr: Array<Vector>): Array<number> {
     let res = [];
     for (const vec of arr) {
         res.push(...vec.arr);
@@ -293,7 +293,7 @@ export function flatArrary(arr: Array<Vector>): Array<number> {
 }
 
 // 获取透视投影的投影矩阵
-function perspProjectionMatrix(fovInRad: number, aspect: number, zNear: number, zFar: number): Matrix4 {
+export function perspProjectionMatrix(fovInRad: number, aspect: number, zNear: number, zFar: number): Matrix4 {
     let f = Math.tan(Math.PI * 0.5 - 0.5 * fovInRad);
     let rangeInv = 1 / Math.abs(zNear - zFar);
 
@@ -306,11 +306,29 @@ function perspProjectionMatrix(fovInRad: number, aspect: number, zNear: number, 
 }
 
 // 获得正交投影的投影矩阵
-function orthographicProjectionMatrix(width: number, height: number, depth: number): Matrix4 {
+export function orthographicProjectionMatrix(width: number, height: number, depth: number): Matrix4 {
     return new Matrix4([
         2 / width, 0, 0, 0,
         0, -2 / height, 0, 0,
         0, 0, 2 / depth, 0, 0,
         -1, 1, 0, 1
     ]);
+}
+
+/**
+ *  用一个三维向量那个平移一个矩阵
+ *  相当于一物体自身大小为单位长度进行平移
+ */
+export function baseTranlate(v: Array<number>, m: Matrix4): Matrix4 {
+    let matrix = m.matrix;
+    let x = v[0];
+    let y = v[1];
+    let z = v[2];
+
+    matrix[12] = matrix[0] * x + matrix[4] * y + matrix[8] * z + matrix[12];
+    matrix[13] = matrix[1] * x + matrix[5] * y + matrix[9] * z + matrix[13];
+    matrix[14] = matrix[2] * x + matrix[6] * y + matrix[10] * z + matrix[14];
+    matrix[15] = matrix[3] * x + matrix[7] * y + matrix[11] * z + matrix[15];
+
+    return new Matrix4(matrix);
 }
