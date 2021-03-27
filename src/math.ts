@@ -8,15 +8,13 @@ abstract class Vector {
     y: number;
     z: number;
     w: number;
-    constructor(x: number, y: number, z: number, w?: number) {
+    arr: Array<number>;
+    constructor(x: number, y: number, z: number, w: number = 1) {
         this.x = x;
         this.y = y;
         this.z = z;
-        if (w) {
-            this.w = w;
-        } else {
-            this.w = 1;
-        }
+        this.w = w;
+        this.arr = [x, y, z, w];
     }
 }
 
@@ -25,13 +23,13 @@ abstract class Vector {
  * w为1代表一个点，w为0代表向量
  * 默认为点
  */
-class Vector3 extends Vector {
+export class Vector3 extends Vector {
     constructor(x: number, y: number, z: number, w?: number) {
         super(x, y, z, w);
     }
 }
 
-class Vector2 extends Vector {
+export class Vector2 extends Vector {
     constructor(x: number, y: number, w?: number) {
         super(x, y, 0, w);
     }
@@ -75,14 +73,23 @@ abstract class Matrix {
  * +----+----+----+----+
 */
 export class Matrix4 extends Matrix {
-    constructor(m4?: Array<number>) {
+    constructor(m4: Array<number> = [
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1
+    ]) {
         super(m4);
         this.dimension = 4;
     }
 }
 
 class Matrix3 extends Matrix {
-    constructor(m3?: Array<number>) {
+    constructor(m3: Array<number> = [
+        1, 0, 0,
+        0, 1, 0,
+        0, 0, 1
+    ]) {
         super(m3);
         this.dimension = 3;
     }
@@ -195,7 +202,7 @@ function m3Mulm3(a: Array<number>, b: Array<number>): Array<number> {
  * 矩阵相乘的统一接口
  * 只考虑三维、四维矩阵乘法
  */
-export function mutiply(a: Matrix, b: Matrix) {
+export function mutiply(a: Matrix, b: Matrix): Matrix {
     if (a.dimension !== b.dimension) {
         throw new Error("维数错误");
     }
@@ -210,25 +217,19 @@ export function mutiply(a: Matrix, b: Matrix) {
 }
 
 // 获得三维空间的平移矩阵
-function translation(tx: number, ty: number, tz?: number) {
-    let z;
-    if (tz) {
-        z = tz;
-    } else {
-        z = tz;
-    }
+function translation(tx: number, ty: number, tz: number = 0): Matrix4 {
     return new Matrix4([
         1, 0, 0, 0,
         0, 1, 0, 0,
         0, 0, 1, 0,
-        tx, ty, z, 1
+        tx, ty, tz, 1
     ]);
 }
 
 /**
  * 三维空间的缩放矩阵
  */
-function scale3D(scaleX: number, scaleY: number, scaleZ: number) {
+function scale3D(scaleX: number, scaleY: number, scaleZ: number): Matrix4 {
     return new Matrix4([
         scaleX, 0, 0, 0,
         0, scaleY, 0, 0,
@@ -240,7 +241,7 @@ function scale3D(scaleX: number, scaleY: number, scaleZ: number) {
 /**
  *  获取绕x轴旋转的旋转矩阵
  */
-function rotateX(angle: number) {
+function rotateX(angle: number): Matrix4 {
     const angleInRad = angle * Math.PI / 180;
     const c = Math.cos(angleInRad);
     const s = Math.sin(angleInRad);
@@ -255,7 +256,7 @@ function rotateX(angle: number) {
 /**
  * 获取绕Y轴旋转的旋转矩阵
  */
-function rotateY(angle: number) {
+function rotateY(angle: number): Matrix4 {
     const angleInRad = angle * Math.PI / 180;
     const c = Math.cos(angleInRad);
     const s = Math.sin(angleInRad);
@@ -270,7 +271,7 @@ function rotateY(angle: number) {
 /**
  * 获取绕Z轴旋转的旋转矩阵
  */
-function rotateZ(angle: number) {
+function rotateZ(angle: number): Matrix4 {
     const angleInRad = angle * Math.PI / 180;
     const c = Math.cos(angleInRad);
     const s = Math.sin(angleInRad);
@@ -282,3 +283,34 @@ function rotateZ(angle: number) {
     ]);
 }
 
+// 二维数组扁平化
+export function flatArrary(arr: Array<Vector>): Array<number> {
+    let res = [];
+    for (const vec of arr) {
+        res.push(...vec.arr);
+    }
+    return res;
+}
+
+// 获取透视投影的投影矩阵
+function perspProjectionMatrix(fovInRad: number, aspect: number, zNear: number, zFar: number): Matrix4 {
+    let f = Math.tan(Math.PI * 0.5 - 0.5 * fovInRad);
+    let rangeInv = 1 / Math.abs(zNear - zFar);
+
+    return new Matrix4([
+        f / aspect, 0, 0, 0,
+        0, f, 0, 0,
+        0, 0, (zNear + zFar) * rangeInv, -1,
+        0, 0, zNear * zFar * rangeInv * 2, 0
+    ])
+}
+
+// 获得正交投影的投影矩阵
+function orthographicProjectionMatrix(width: number, height: number, depth: number): Matrix4 {
+    return new Matrix4([
+        2 / width, 0, 0, 0,
+        0, -2 / height, 0, 0,
+        0, 0, 2 / depth, 0, 0,
+        -1, 1, 0, 1
+    ]);
+}
