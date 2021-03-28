@@ -18,14 +18,31 @@ export class Rectangle {
     verties: Array<Vector2> = [];
     height: number;
     width: number;
+    color: Array<number> = [];
 
     // 定对角线的两个点
-    constructor(width: number = 2, height: number = 2) {
+    constructor(width: number = 2, height: number = 2, color: Array<number> = [255, 255, 255, 1]) {
         // 绘制方法: TRIANGLE_STRIP
         this.verties.push(new Vector2(1, 1));
         this.verties.push(new Vector2(-1, 1));
         this.verties.push(new Vector2(1, -1));
         this.verties.push(new Vector2(-1, -1));
+
+        if (color.length > 4 || color.length < 3)
+            throw new Error('错误的RGBA信息');
+        this.color.push(color[0] / 255);
+        this.color.push(color[1] / 255);
+        this.color.push(color[2] / 255);
+        this.color.push(color[3] ? color[3] : 1);
+    }
+
+    setColor(r: number, g: number, b: number, a?: number) {
+        this.color[0] = r / 255;
+        this.color[1] = g / 255;
+        this.color[2] = b / 255;
+        if (!a) {
+            this.color[3] = 1;
+        } else this.color[3] = a;
     }
 }
 

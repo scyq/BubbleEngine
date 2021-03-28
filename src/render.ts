@@ -56,12 +56,16 @@ export class Renderer {
         else {
             this.vsSource = `
                 attribute vec4 aVertexPosition;
-        
+                attribute vec4 aVertexColor;
+
                 uniform mat4 uModelViewMatrix;
                 uniform mat4 uProjectionMatrix;
-        
-                void main() {
+
+                varying lowp vec4 vColor;
+
+                void main(void) {
                     gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
+                    vColor = aVertexColor;
                 }
             `;
         }
@@ -69,8 +73,9 @@ export class Renderer {
             this.fsSource = fsSource;
         } else {
             this.fsSource = `
+                varying lowp vec4 vColor;
                 void main() {
-                    gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+                    gl_FragColor = vColor;
                 }
             `;
         }
@@ -112,12 +117,18 @@ export class Renderer {
     /**
      * 2D对象顶点缓冲区
      */
-    private initBuffers2D(vertices: Array<Vector2>): WebGLBuffer {
+    private initBuffers2D(vertices: Array<Vector2>, color: Array<number>): WebGLBuffer {
         const positionBuffer = this.gl.createBuffer();
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, positionBuffer);
         this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(flatArray2D(vertices)), this.gl.STATIC_DRAW);
+
+        const colorBuffer = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, colorBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(color), this.gl.STATIC_DRAW);
+
         return {
-            position: positionBuffer
+            position: positionBuffer,
+            color: colorBuffer
         }
     }
 
@@ -141,6 +152,7 @@ export class Renderer {
         let modelViewMatrix = new Matrix4();
         modelViewMatrix = baseTranlate([0, 0, -6], modelViewMatrix);
 
+        // 取出点的位置信息
         {
             const numComponents = 2;
             const type = this.gl.FLOAT;
@@ -158,6 +170,25 @@ export class Renderer {
             );
             this.gl.enableVertexAttribArray(
                 programInfo.attribLocations.vertexPosition);
+        }
+
+        // 取出点的颜色信息
+        {
+            const numComponents = 1;
+            const type = this.gl.FLOAT;
+            const normalize = false;
+            const stride = 0;
+            const offset = 0;
+            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffers["color"]);
+            this.gl.vertexAttribPointer(
+                programInfo.attribLocations.vertexColor,
+                numComponents,
+                type,
+                normalize,
+                stride,
+                offset);
+            this.gl.enableVertexAttribArray(
+                programInfo.attribLocations.vertexColor);
         }
 
 
@@ -187,6 +218,7 @@ export class Renderer {
             program: shaderProgram,
             attribLocations: {
                 vertexPosition: this.gl.getAttribLocation(shaderProgram, 'aVertexPosition'),
+                vertexColor: this.gl.getAttribLocation(shaderProgram, 'aVertexColor'),
             },
             uniformLocations: {
                 projectionMatrix: this.gl.getUniformLocation(shaderProgram, 'uProjectionMatrix'),
@@ -195,7 +227,8 @@ export class Renderer {
         };
 
         let square = new Rectangle();
-        const buffers = this.initBuffers2D(square.verties);
+
+        const buffers = this.initBuffers2D(square.verties, square.color);
 
         this.drawScene(camera, programInfo, buffers);
     }
