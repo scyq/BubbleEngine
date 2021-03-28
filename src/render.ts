@@ -1,5 +1,5 @@
 import { Rectangle } from "./components";
-import { flatArray, Matrix4, Vector2, perspProjectionMatrix, baseTranlate } from "./math";
+import { flatArray2D, Matrix4, Vector2, perspProjectionMatrix, baseTranlate } from "./math";
 
 export class Camera {
     static PERSPECTIVE: number = 0;
@@ -10,7 +10,6 @@ export class Camera {
     aspect: number;
     zNear: number;
     zFar: number;
-    projectionMatrix: Matrix4;
 
     constructor(
         type: number = Camera.PERSPECTIVE,
@@ -29,6 +28,9 @@ export class Camera {
         }
 
         this.aspect = width / height;
+        this.fov = fov;
+        this.zFar = zFar;
+        this.zNear = zNear;
     }
 
 }
@@ -85,7 +87,6 @@ export class Renderer {
             this.gl.deleteShader(shader);
             return null;
         }
-
         return shader;
     }
 
@@ -108,12 +109,13 @@ export class Renderer {
         return shaderProgram;
     }
 
-    // 2D顶点缓冲器
+    /**
+     * 2D对象顶点缓冲区
+     */
     private initBuffers2D(vertices: Array<Vector2>): WebGLBuffer {
-        console.log(new Float32Array(flatArray(vertices)));
         const positionBuffer = this.gl.createBuffer();
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, positionBuffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(flatArray(vertices)), this.gl.STATIC_DRAW);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(flatArray2D(vertices)), this.gl.STATIC_DRAW);
         return {
             position: positionBuffer
         }
@@ -192,9 +194,7 @@ export class Renderer {
             },
         };
 
-        let a = new Vector2(-1, 1);
-        let c = new Vector2(1, -1);
-        let square = new Rectangle(a, c);
+        let square = new Rectangle();
         const buffers = this.initBuffers2D(square.verties);
 
         this.drawScene(camera, programInfo, buffers);

@@ -1,4 +1,4 @@
-import { Vector2 } from "./math";
+import { flatArray2D, Vector2 } from "./math";
 
 // 这边逻辑暂时不敢动，不知道如何抽象
 export abstract class GameObject {
@@ -20,16 +20,12 @@ export class Rectangle {
     width: number;
 
     // 定对角线的两个点
-    constructor(a: Vector2, c: Vector2) {
-        this.width = Math.abs(a.x - c.x);
-        this.height = Math.abs(a.y - c.y);
-        const b = new Vector2(a.x + this.width, a.y);
-        const d = new Vector2(c.x - this.width, c.y);
-
-        this.verties.push(a);
-        this.verties.push(b);
-        this.verties.push(c);
-        this.verties.push(d);
+    constructor(width: number = 2, height: number = 2) {
+        // 绘制方法: TRIANGLE_STRIP
+        this.verties.push(new Vector2(1, 1));
+        this.verties.push(new Vector2(-1, 1));
+        this.verties.push(new Vector2(1, -1));
+        this.verties.push(new Vector2(-1, -1));
     }
 }
 

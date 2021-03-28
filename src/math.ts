@@ -283,11 +283,22 @@ function rotateZ(angle: number): Matrix4 {
     ]);
 }
 
-// 二维数组扁平化
-export function flatArray(arr: Array<Vector>): Array<number> {
+// 将存Vector2的数组变为展开(x, y)的数组
+export function flatArray2D(arr: Array<Vector2>): Array<number> {
     let res = [];
     for (const vec of arr) {
-        res.push(...vec.arr);
+        res.push(vec.x);
+        res.push(vec.y);
+    }
+    return res;
+}
+
+export function flatArray3D(arr: Array<Vector3>): Array<number> {
+    let res = [];
+    for (const vec of arr) {
+        res.push(vec.x);
+        res.push(vec.y);
+        res.push(vec.z);
     }
     return res;
 }
