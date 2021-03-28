@@ -1,4 +1,4 @@
-import { GameObject } from './components';
+import { GameObject, Rectangle } from './components';
 import { Camera, Renderer } from './render';
 const canvas = document.getElementById('game') as HTMLCanvasElement;
 const gl = canvas.getContext('webgl2');
@@ -55,6 +55,9 @@ export class GameEngine {
     private renderList: GameObject[] = [];
     private gameObjects: { [id: string]: GameObject } = {};
 
+    private renderer: Renderer;
+    private camera: Camera;
+
     public addGameObject(gameObject: GameObject): void {
         this.renderList.push(gameObject);
     }
@@ -66,12 +69,12 @@ export class GameEngine {
     createGameObject(type: string, properties: any): GameObject {
         let gameObject: GameObject;
         switch (type) {
+            case 'rectangle':
+                gameObject = new Rectangle(properties.width, properties.height, properties.color);
+                break;
             default:
-                throw Error;
+                throw new Error("不存在该物件");
         }
-        gameObject.x = properties.x || 0;
-        gameObject.y = properties.y || 0;
-        gameObject.alpha = properties.hasOwnProperty('alpha') ? properties.alpha : 1;
         return gameObject;
     }
 
@@ -83,6 +86,7 @@ export class GameEngine {
     }
 
     private loadScene(sceneConfig: any): void {
+        this.camera = new Camera();
         for (let config of sceneConfig) {
             const object = this.createGameObject(config.type, config.properties);
             if (config.id) {
@@ -90,28 +94,22 @@ export class GameEngine {
             }
             this.addGameObject(object);
         }
+        this.renderer = new Renderer(gl, this.renderList);
     }
 
     private onEnterFrame(deltaTime: number) {
-        // gl.clearRect(0, 0, canvas.width, canvas.height);
 
-        this.iterationCurrentTime += deltaTime;
-        while (this.iterationCurrentTime >= this.mileSecondPerFrame) {
-            this.iterationCurrentTime -= this.mileSecondPerFrame;
-            if (this.onTick) {
-                this.onTick();
-            }
-        }
-        if (this.onUpdate) {
-            this.onUpdate(deltaTime);
-        }
-        this.draw(gl);
-    }
-
-    public draw(gl: WebGL2RenderingContext): void {
-        for (const gameObject of this.renderList) {
-            gameObject.draw(gl);
-        }
+        //this.iterationCurrentTime += deltaTime;
+        // while (this.iterationCurrentTime >= this.mileSecondPerFrame) {
+        //     this.iterationCurrentTime -= this.mileSecondPerFrame;
+        //     if (this.onTick) {
+        //         this.onTick();
+        //     }
+        // }
+        // if (this.onUpdate) {
+        //     this.onUpdate(deltaTime);
+        // }
+        this.renderer.render(this.camera);
     }
 
     public start(images: string[], sceneConfig: any, onComplete?: Function): void {
@@ -127,11 +125,6 @@ export class GameEngine {
                 onComplete();
             }
         });
-    }
 
-    public test() {
-        const camera = new Camera();
-        const renderer = new Renderer(gl);
-        renderer.render(camera);
     }
 }

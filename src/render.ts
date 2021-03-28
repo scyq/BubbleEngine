@@ -1,4 +1,4 @@
-import { Rectangle } from "./components";
+import { GameObject, Rectangle } from "./components";
 import { flatArray2D, Matrix4, Vector2, perspProjectionMatrix, baseTranlate, scale } from "./math";
 
 export class Camera {
@@ -45,7 +45,9 @@ export class Renderer {
     // fragment shader program
     private fsSource: string;
 
-    constructor(gl: WebGL2RenderingContext, vsSource?: string, fsSource?: string) {
+    private renderList: GameObject[];
+
+    constructor(gl: WebGL2RenderingContext, renderList: GameObject[], vsSource?: string, fsSource?: string) {
         if (!gl) {
             throw new Error("请传入WebGL2的上下文");
         }
@@ -80,6 +82,7 @@ export class Renderer {
                 }
             `;
         }
+        this.renderList = renderList;
     }
 
     // 创建指定类型的着色器，上传source源码并编译
@@ -118,14 +121,14 @@ export class Renderer {
     /**
      * 2D对象顶点缓冲区
      */
-    private initBuffers2D(vertices: Array<Vector2>, color: Array<number>): WebGLBuffer {
-        const positionBuffer = this.gl.createBuffer();
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, positionBuffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(flatArray2D(vertices)), this.gl.STATIC_DRAW);
+    public static initBuffers2D(gl: WebGL2RenderingContext, vertices: Array<Vector2>, color: Array<number>): WebGLBuffer {
+        const positionBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(flatArray2D(vertices)), gl.STATIC_DRAW);
 
-        const colorBuffer = this.gl.createBuffer();
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, colorBuffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(color), this.gl.STATIC_DRAW);
+        const colorBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(color), gl.STATIC_DRAW);
 
         return {
             position: positionBuffer,
@@ -133,7 +136,7 @@ export class Renderer {
         }
     }
 
-    private drawScene(camera: Camera, programInfo: any, buffers: WebGLBuffer) {
+    private drawScene(camera: Camera, programInfo: any) {
         this.gl.clearColor(0, 0, 0, 1);
         this.gl.clearDepth(1); // clear everything
         this.gl.enable(this.gl.DEPTH_TEST);
@@ -153,47 +156,6 @@ export class Renderer {
         let modelViewMatrix = new Matrix4();
         modelViewMatrix = baseTranlate([0, 0, -6], modelViewMatrix);
 
-        // 取出点的位置信息
-        {
-            const numComponents = 2;
-            const type = this.gl.FLOAT;
-            const normalize = false;
-            const stride = 0;
-            const offset = 0;
-            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffers['position']);
-            this.gl.vertexAttribPointer(
-                programInfo.attribLocations.vertexPosition,
-                numComponents,
-                type,
-                normalize,
-                stride,
-                offset
-            );
-            this.gl.enableVertexAttribArray(
-                programInfo.attribLocations.vertexPosition);
-        }
-
-        // 取出点的颜色信息
-        {
-            // 正方形的四个顶点
-            const numComponents = 4;
-            const type = this.gl.FLOAT;
-            const normalize = false;
-            const stride = 0;
-            const offset = 0;
-            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffers["color"]);
-            this.gl.vertexAttribPointer(
-                programInfo.attribLocations.vertexColor,
-                numComponents,
-                type,
-                normalize,
-                stride,
-                offset);
-            this.gl.enableVertexAttribArray(
-                programInfo.attribLocations.vertexColor);
-        }
-
-
         this.gl.useProgram(programInfo.program);
 
         // set shader uniforms
@@ -205,16 +167,9 @@ export class Renderer {
             programInfo.uniformLocations.modelViewMatrix,
             false,
             modelViewMatrix.matrix);
-        this.gl.uniformMatrix4fv(
-            programInfo.uniformLocations.scaleMatrix,
-            false,
-            scale(1.5, 0.5, 1).matrix
-        )
 
-        {
-            const offset = 0;
-            const vertexCount = 4;
-            this.gl.drawArrays(this.gl.TRIANGLE_STRIP, offset, vertexCount);
+        for (const obj of this.renderList) {
+            obj.render(this.gl, programInfo);
         }
     }
 
@@ -234,10 +189,7 @@ export class Renderer {
             },
         };
 
-        let square = new Rectangle(8, 2, [255, 125, 255, 1]);
+        this.drawScene(camera, programInfo);
 
-        const buffers = this.initBuffers2D(square.verties, square.fragColor);
-
-        this.drawScene(camera, programInfo, buffers);
     }
 }
