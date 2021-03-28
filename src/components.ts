@@ -1,4 +1,4 @@
-import { flatArray2D, Vector2 } from "./math";
+import { flatArray2D, Matrix4, Vector2, scale } from "./math";
 
 // 这边逻辑暂时不敢动，不知道如何抽象
 export abstract class GameObject {
@@ -19,6 +19,8 @@ export class Rectangle {
     height: number;
     width: number;
     color: Array<number> = [];
+    fragColor: Array<number> = []; // 每个顶点记录自己的颜色
+    scaleMatrix: Matrix4;
 
     // 定对角线的两个点
     constructor(width: number = 2, height: number = 2, color: Array<number> = [255, 255, 255, 1]) {
@@ -34,6 +36,13 @@ export class Rectangle {
         this.color.push(color[1] / 255);
         this.color.push(color[2] / 255);
         this.color.push(color[3] ? color[3] : 1);
+
+        for (let i = 0; i < 4; i++)
+            this.fragColor.push(...this.color);
+
+        const scaleX = width / 2;
+        const scaleY = height / 2;
+        this.scaleMatrix = scale(scaleX, scaleY, 1);
     }
 
     setColor(r: number, g: number, b: number, a?: number) {

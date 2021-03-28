@@ -227,9 +227,9 @@ function translation(tx: number, ty: number, tz: number = 0): Matrix4 {
 }
 
 /**
- * 三维空间的缩放矩阵
+ * 缩放矩阵
  */
-function scale3D(scaleX: number, scaleY: number, scaleZ: number): Matrix4 {
+export function scale(scaleX: number, scaleY: number, scaleZ: number): Matrix4 {
     return new Matrix4([
         scaleX, 0, 0, 0,
         0, scaleY, 0, 0,

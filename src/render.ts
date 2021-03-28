@@ -174,7 +174,8 @@ export class Renderer {
 
         // 取出点的颜色信息
         {
-            const numComponents = 1;
+            // 正方形的四个顶点
+            const numComponents = 4;
             const type = this.gl.FLOAT;
             const normalize = false;
             const stride = 0;
@@ -226,9 +227,9 @@ export class Renderer {
             },
         };
 
-        let square = new Rectangle();
+        let square = new Rectangle(8, 2, [255, 125, 255, 1]);
 
-        const buffers = this.initBuffers2D(square.verties, square.color);
+        const buffers = this.initBuffers2D(square.verties, square.fragColor);
 
         this.drawScene(camera, programInfo, buffers);
     }
