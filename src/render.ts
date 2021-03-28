@@ -1,5 +1,5 @@
 import { Rectangle } from "./components";
-import { flatArray2D, Matrix4, Vector2, perspProjectionMatrix, baseTranlate } from "./math";
+import { flatArray2D, Matrix4, Vector2, perspProjectionMatrix, baseTranlate, scale } from "./math";
 
 export class Camera {
     static PERSPECTIVE: number = 0;
@@ -60,11 +60,12 @@ export class Renderer {
 
                 uniform mat4 uModelViewMatrix;
                 uniform mat4 uProjectionMatrix;
+                uniform mat4 uScale;
 
                 varying lowp vec4 vColor;
 
                 void main(void) {
-                    gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
+                    gl_Position = uScale * uProjectionMatrix * uModelViewMatrix * aVertexPosition;
                     vColor = aVertexColor;
                 }
             `;
@@ -204,6 +205,11 @@ export class Renderer {
             programInfo.uniformLocations.modelViewMatrix,
             false,
             modelViewMatrix.matrix);
+        this.gl.uniformMatrix4fv(
+            programInfo.uniformLocations.scaleMatrix,
+            false,
+            scale(1.5, 0.5, 1).matrix
+        )
 
         {
             const offset = 0;
@@ -224,6 +230,7 @@ export class Renderer {
             uniformLocations: {
                 projectionMatrix: this.gl.getUniformLocation(shaderProgram, 'uProjectionMatrix'),
                 modelViewMatrix: this.gl.getUniformLocation(shaderProgram, 'uModelViewMatrix'),
+                scaleMatrix: this.gl.getUniformLocation(shaderProgram, "uScale")
             },
         };
 
