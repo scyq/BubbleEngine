@@ -4,6 +4,9 @@ import { Renderer } from "./render";
 
 export abstract class GameObject {
     children: GameObject[] = [];
+    renderMode: number = WebGL2RenderingContext.TRIANGLE_STRIP;
+    buffers: WebGLBuffer;
+    localMatrix: Matrix4 = scale(1, 1, 0);
 
     abstract render(gl: WebGL2RenderingContext, programInfo: any): void;
 }
@@ -13,41 +16,43 @@ class GameObject2D extends GameObject {
     verties: Array<Vector2> = [];
     color: Array<number> = [];  // 面向用户的颜色
     fragColor: Array<number> = []; // 每个顶点记录自己的颜色，交给片段着色器的颜色
-    scaleMatrix: Matrix4 = scale(1, 1, 1);
+    vertexCnt: number;
 
-    constructor(color: Array<number>) {
+    constructor(color: Array<number>, vertexCnt: number) {
         super();
-        if (color.length > 4 || color.length < 3)
+        if (color.length > 4 || color.length < 3) {
             throw new Error('错误的RGBA信息');
-        this.color.push(color[0] / 255);
-        this.color.push(color[1] / 255);
-        this.color.push(color[2] / 255);
-        this.color.push(color[3] ? color[3] : 1);
+        }
+        this.vertexCnt = vertexCnt;
+        this.setColor(color[0], color[1], color[2], 1);
     }
 
     setColor(r: number, g: number, b: number, a?: number) {
+        this.color = new Array(4);
         this.color[0] = r / 255;
         this.color[1] = g / 255;
         this.color[2] = b / 255;
         if (!a) {
             this.color[3] = 1;
         } else this.color[3] = a;
+        this.fragColor = [];
+        for (let i = 0; i < this.vertexCnt; i++)
+            this.fragColor.push(...this.color);
     }
 
     render(gl: WebGL2RenderingContext, programInfo: any): void {
-
         const buffers = Renderer.initBuffers2D(gl, this.verties, this.fragColor);
 
-        // 乘缩放矩阵
+        // 仿射变换矩阵
         gl.uniformMatrix4fv(
-            programInfo.uniformLocations.scaleMatrix,
+            programInfo.uniformLocations.affineMatrix,
             false,
-            this.scaleMatrix.matrix
+            this.localMatrix.matrix
         );
 
         // 取出点的位置信息
         {
-            const numComponents = 2;
+            const numComponents = 2;    // (x, y)
             const type = gl.FLOAT;
             const normalize = false;
             const stride = 0;
@@ -67,7 +72,7 @@ class GameObject2D extends GameObject {
 
         // 获取片元着色器信息
         {
-            const numComponents = this.verties.length;
+            const numComponents = 4;    // (r, g, b, a)
             const type = gl.FLOAT;
             const normalize = false;
             const stride = 0;
@@ -87,7 +92,7 @@ class GameObject2D extends GameObject {
         {
             const offset = 0;
             const vertexCount = this.verties.length;
-            gl.drawArrays(gl.TRIANGLE_STRIP, offset, vertexCount);
+            gl.drawArrays(this.renderMode, offset, vertexCount);
         }
     }
 }
@@ -99,15 +104,44 @@ export class Rectangle extends GameObject2D {
 
     // 定对角线的两个点
     constructor(width: number = 2, height: number = 2, color: Array<number> = [255, 255, 255, 1]) {
-        super(color);
-        this.scaleMatrix = scale(width / 2, height / 2, 1);
+        super(color, 4);
+        this.localMatrix = scale(width / 2, height / 2, 1);
         // 绘制方法: TRIANGLE_STRIP
         this.verties.push(new Vector2(1, 1));
         this.verties.push(new Vector2(-1, 1));
         this.verties.push(new Vector2(1, -1));
         this.verties.push(new Vector2(-1, -1));
-        for (let i = 0; i < 4; i++)
-            this.fragColor.push(...this.color);
+    }
+}
+
+export class Circle extends GameObject2D {
+    radius: number;
+
+    constructor(radius: number = 1, color: Array<number> = [255, 255, 255, 1]) {
+        // 圆分成多少个三角形
+        const N = 100;
+        super(color, N + 1);
+
+        this.verties.push(new Vector2(0, 0));
+        this.radius = radius;
+        this.renderMode = WebGL2RenderingContext.TRIANGLE_FAN;
+
+        for (let i = 0; i < N; i++) {
+            let theta = i * 2.1 * Math.PI / N;
+            let x = this.radius * Math.sin(theta);
+            let y = this.radius * Math.cos(theta);
+            this.verties.push(new Vector2(x, y));
+        }
+    }
+}
+
+export class Triangle extends GameObject2D {
+    constructor(color: Array<number> = [255, 255, 255, 1]) {
+        super(color, 3);
+
+        this.verties.push(new Vector2(-1, 0));
+        this.verties.push(new Vector2(1, 0));
+        this.verties.push(new Vector2(0, 1));
     }
 }
 

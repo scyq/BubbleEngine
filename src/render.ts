@@ -62,12 +62,12 @@ export class Renderer {
 
                 uniform mat4 uModelViewMatrix;
                 uniform mat4 uProjectionMatrix;
-                uniform mat4 uScale;
+                uniform mat4 uAffine;
 
                 varying lowp vec4 vColor;
 
                 void main(void) {
-                    gl_Position = uScale * uProjectionMatrix * uModelViewMatrix * aVertexPosition;
+                    gl_Position = uAffine * uProjectionMatrix * uModelViewMatrix * aVertexPosition;
                     vColor = aVertexColor;
                 }
             `;
@@ -185,7 +185,7 @@ export class Renderer {
             uniformLocations: {
                 projectionMatrix: this.gl.getUniformLocation(shaderProgram, 'uProjectionMatrix'),
                 modelViewMatrix: this.gl.getUniformLocation(shaderProgram, 'uModelViewMatrix'),
-                scaleMatrix: this.gl.getUniformLocation(shaderProgram, "uScale")
+                affineMatrix: this.gl.getUniformLocation(shaderProgram, "uAffine")
             },
         };
 

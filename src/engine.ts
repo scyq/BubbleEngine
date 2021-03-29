@@ -1,4 +1,4 @@
-import { GameObject, Rectangle } from './components';
+import { Circle, GameObject, Rectangle, Triangle } from './components';
 import { Camera, Renderer } from './render';
 const canvas = document.getElementById('game') as HTMLCanvasElement;
 const gl = canvas.getContext('webgl2');
@@ -71,6 +71,12 @@ export class GameEngine {
         switch (type) {
             case 'rectangle':
                 gameObject = new Rectangle(properties.width, properties.height, properties.color);
+                break;
+            case 'circle':
+                gameObject = new Circle(properties.radius, properties.color);
+                break;
+            case 'triangle':
+                gameObject = new Triangle(properties.color);
                 break;
             default:
                 throw new Error("不存在该物件");
