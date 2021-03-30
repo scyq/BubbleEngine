@@ -1,4 +1,4 @@
-import { Circle, GameObject, Rectangle, Triangle } from './components';
+import { Circle, GameObject, Rectangle, Triangle } from './entities';
 import { Camera, Renderer } from './render';
 const canvas = document.getElementById('game') as HTMLCanvasElement;
 const gl = canvas.getContext('webgl2');
@@ -105,16 +105,16 @@ export class GameEngine {
 
     private onEnterFrame(deltaTime: number) {
 
-        //this.iterationCurrentTime += deltaTime;
-        // while (this.iterationCurrentTime >= this.mileSecondPerFrame) {
-        //     this.iterationCurrentTime -= this.mileSecondPerFrame;
-        //     if (this.onTick) {
-        //         this.onTick();
-        //     }
-        // }
-        // if (this.onUpdate) {
-        //     this.onUpdate(deltaTime);
-        // }
+        this.iterationCurrentTime += deltaTime;
+        while (this.iterationCurrentTime >= this.mileSecondPerFrame) {
+            this.iterationCurrentTime -= this.mileSecondPerFrame;
+            if (this.onTick) {
+                this.onTick();
+            }
+        }
+        if (this.onUpdate) {
+            this.onUpdate(deltaTime);
+        }
         this.renderer.render(this.camera);
     }
 

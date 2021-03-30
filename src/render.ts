@@ -1,4 +1,4 @@
-import { GameObject, Rectangle } from "./components";
+import { GameObject, Rectangle } from "./entities";
 import { flatArray2D, Matrix4, Vector2, perspProjectionMatrix, baseTranlate, scale } from "./math";
 
 export class Camera {
