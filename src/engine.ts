@@ -34,6 +34,11 @@
 //     }
 // }
 
+export class GameEngine {
+    private fps: number = 60;
+    private mileSecondPerFrame: number = 1000 / this.fps;
+}
+
 // export class GameEngine {
 
 //     private fps: number = 60;

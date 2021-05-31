@@ -1,5 +1,4 @@
 // import { GameObject } from './entities';
-// import { Matrix4 } from './math';
 
 // export class Behaviour {
 
