@@ -62,7 +62,8 @@
   },
   "include": [
     "src",
-    "gl-matrix-min.js",
-    "assets/gl-matrix.js"
+    "assets/gl-matrix.js",
+    "index.ts",
+    "scripts"
   ]
 }

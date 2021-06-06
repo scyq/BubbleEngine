@@ -2,7 +2,7 @@
   "name": "gameengine",
   "version": "1.0.0",
   "description": "",
-  "main": "./src/index.ts",
+  "main": "main.js",
   "scripts": {
     "start": "webpack-dev-server",
     "test": "jest"

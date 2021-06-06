@@ -1,0 +1,48 @@
+{
+    "components": [
+        {
+            "name": "Transform",
+            "properties": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "scaleX": 1,
+                "scaleY": 1,
+                "scaleZ": 1,
+                "rotationX": 0,
+                "rotationY": 0,
+                "rotationZ": 0
+            }
+        }
+    ],
+    "children": [
+        {
+            "components": [
+                {
+                    "name": "Transform",
+                    "properties": {
+                        "x": 100,
+                        "y": 0,
+                        "scaleX": 1,
+                        "scaleY": 1,
+                        "rotation": 45,
+                        "alpha": 0.5
+                    }
+                },
+                {
+                    "name": "MeshRender",
+                    "properties": {
+                        "type": "cube"
+                    }
+                },
+                {
+                    "name": "Script",
+                    "properties": {
+                        "path": ""
+                    }
+                }
+            ],
+            "children": []
+        }
+    ]
+}

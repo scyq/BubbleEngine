@@ -1,103 +1,87 @@
-// import { Circle, GameObject, Rectangle, Triangle } from './entities';
-// const canvas = document.getElementById('game') as HTMLCanvasElement;
-// const gl = canvas.getContext('webgl2');
+import { createComponent, MeshRender, Script } from "./Components";
+import { GameObject } from "./GameObject";
+import { LifeCycleSystem, System } from "./System";
 
-// const imagesStorage: any = {};
+const canvas = document.getElementById('game') as HTMLCanvasElement;
+const gl = canvas.getContext('webgl2');
 
-// function getImage(url: string): ImageBitmap {
-//     return imagesStorage[url];
-// }
-
-// function loadImage(url: string, onLoad: Function): void {
-//     const image = new Image();
-//     image.src = url;
-//     image.onload = function () {
-//         imagesStorage[url] = image;
-//         onLoad(image);
-//     };
-// }
-
-// function loadMultiImages(urls: string[], onLoad: Function): void {
-//     if (urls.length < 1) {
-//         onLoad();
-//         return;
-//     }
-//     let count = 0;
-//     for (const url of urls) {
-//         loadImage(url, image => {
-//             count++;
-//             imagesStorage[url] = image;
-//             if (count === urls.length) {
-//                 onLoad();
-//             }
-//         });
-//     }
-// }
-
-export class GameEngine {
-    private fps: number = 60;
-    private mileSecondPerFrame: number = 1000 / this.fps;
+function readSceneJson(path: string, onSuccess: Function) {
+    const xhr = new XMLHttpRequest();
+    xhr.onload = () => {
+        onSuccess(xhr.responseText);
+    }
+    xhr.open('get', path);
+    xhr.send();
 }
 
-// export class GameEngine {
+export class GameEngine {
 
-//     private fps: number = 60;
-//     private mileSecondPerFrame: number = 1000 / this.fps;
-//     private iterationCurrentTime: number = 0;
+    private lastTime: number = 0;
+    private rootGameObject: GameObject;
+    private systems: System[] = [];
 
-//     private lastTime: number = 0;
+    runMode: "running" | "edit" = "running";
 
-//     private renderList: GameObject[] = [];
-//     private gameObjects: { [id: string]: GameObject } = {};
+    constructor() {
+        gl.clearColor(0, 0, 0, 1);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+    }
 
+    start() {
+        this.loadScene("../scene/defaultScene.json", () => {
+            const initTime = Date.now();
+            if (this.runMode === "running") {
+                this.registerSystem(new LifeCycleSystem());
+            }
+            this.enterFrame(initTime);
+        });
+    }
 
-//     root: GameObject;
+    // 心跳控制器
+    enterFrame(enterTime: number) {
+        const duringTime = enterTime - this.lastTime;
+        this.lastTime = enterTime;
+        this.onEnterFrame(duringTime);
+        requestAnimationFrame(enterTime => this.enterFrame(enterTime));
+    }
 
-//     public getGameObjecetById(id: string): GameObject {
-//         return this.gameObjects[id];
-//     }
+    private onEnterFrame(duringTime: number) {
+        for (const system of this.systems) {
+            system.onFrame(duringTime);
+        }
+    }
 
-//     createGameObject(data: any): GameObject {
-//         let gameObject: GameObject = new GameObject();
+    registerSystem(system: System) {
+        this.systems.push(system);
+        system.rootGameObject = this.rootGameObject;
+        system.onStart();
+    }
 
-//         return gameObject;
-//     }
+    loadScene(path: string, onSuccess: Function) {
+        readSceneJson(path, content => {
+            const sceneConfig = JSON.parse(content);
+            const root = this.createGameObjectFromConfig(sceneConfig);
+            this.rootGameObject = root;
+            onSuccess();
+        })
+    }
 
-//     private enterFrame(advancedTime: number) {
-//         const deltaTime = advancedTime - this.lastTime;
-//         this.lastTime = advancedTime;
-//         this.onEnterFrame(deltaTime);
-//         requestAnimationFrame(advancedTime => this.enterFrame(advancedTime));
-//     }
+    private createGameObjectFromConfig(config: any): GameObject {
+        const { children } = config;
+        let gameObject: GameObject = new GameObject;
+        if (children) {
+            for (const child of children) {
+                const childGameObject = this.createGameObjectFromConfig(child);
+                gameObject.addChild(childGameObject);
+            }
+        }
+        const componentConfigs = config.components || [];
+        for (const componentConfig of componentConfigs) {
+            const component = createComponent(componentConfig);
+            gameObject.addComponent(component);
+        }
+        return gameObject;
+    }
 
-//     private loadScene(sceneConfig: any): void {
-//         // this.camera = new Camera();
-//         // for (let config of sceneConfig) {
-//         //     const object = this.createGameObject(config);
-//         //     if (config.id) {
-//         //         this.gameObjects[config.id] = object;
-//         //     }
-//         //     // this.addGameObject(object);
-//         // }
-//         // this.renderer = new Renderer(gl, this.renderList);
-//     }
+}
 
-//     private onEnterFrame(deltaTime: number) {
-
-//         this.iterationCurrentTime += deltaTime;
-//         // while (this.iterationCurrentTime >= this.mileSecondPerFrame) {
-//         //     this.iterationCurrentTime -= this.mileSecondPerFrame;
-//         //     if (this.onTick) {
-//         //         this.onTick();
-//         //     }
-//         // }
-//         // if (this.onUpdate) {
-//         //     this.onUpdate(deltaTime);
-//         // }
-//         // this.renderer.render(this.camera);
-//     }
-
-//     public start(): void {
-
-//     }
-// }
