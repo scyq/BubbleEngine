@@ -37,5 +37,8 @@
     "webpack": "^5.24.2",
     "webpack-cli": "3.3.12",
     "webpack-dev-server": "^3.11.2"
+  },
+  "dependencies": {
+    "twgl.js": "^4.19.1"
   }
 }

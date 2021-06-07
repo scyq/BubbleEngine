@@ -1,7 +1,6 @@
 import { GameObject, Camera } from "./GameObject";
 import * as math from '../assets/gl-matrix';
-import { Renderer } from "./Render";
-import { getModelInfo } from "./Model";
+import { objParser, readObjFile, Renderer } from "./Render";
 
 
 let componentId = -1;
@@ -59,7 +58,7 @@ export class Transform extends Component {
 
     x: number = 0;
     y: number = 0;
-    z: number = -6.0;
+    z: number = 0;
     scaleX: number = 1;
     scaleY: number = 1;
     scaleZ: number = 1;
@@ -67,51 +66,50 @@ export class Transform extends Component {
     rotationY: number = 0;  // degree
     rotationZ: number = 0;  // degree
 
-    modelViewMatrix: any = math.mat4.create();
+    localMatrix: any = math.mat4.create();
     globalMatrix: any = math.mat4.create();
 
     constructor() {
         super();
-        this.updateModelViewMatrix();
+        this.updateLocalMatrix();
     }
 
     private deg2rad(deg: number) {
         return deg * Math.PI / 180;
     }
 
-    private updateModelViewMatrix() {
-        // Set the drawing position to the "identity" point, which is
-        // the center of the scene.
-        const modelViewMatrix = math.mat4.create();
+    private updateLocalMatrix() {
 
-        // Now move the drawing position a bit to where we want to
-        // start drawing the square.
+        const localMatrix = math.mat4.create();
+
         math.mat4.translate(
-            modelViewMatrix,    // destination matrix
-            modelViewMatrix,    // matrix to translate
+            localMatrix,    // destination matrix
+            localMatrix,    // matrix to translate
             [this.x, this.y, this.z]    // amount to translate
         );
 
-        math.mat4.rotateX(modelViewMatrix, modelViewMatrix, this.deg2rad(this.rotationX));
-        math.mat4.rotateY(modelViewMatrix, modelViewMatrix, this.deg2rad(this.rotationY));
-        math.mat4.rotateZ(modelViewMatrix, modelViewMatrix, this.deg2rad(this.rotationZ));
-        math.mat4.scale(modelViewMatrix, modelViewMatrix, [this.scaleX, this.scaleY, this.scaleZ]);
+        math.mat4.rotateX(localMatrix, localMatrix, this.deg2rad(this.rotationX));
+        math.mat4.rotateY(localMatrix, localMatrix, this.deg2rad(this.rotationY));
+        math.mat4.rotateZ(localMatrix, localMatrix, this.deg2rad(this.rotationZ));
+        math.mat4.scale(localMatrix, localMatrix, [this.scaleX, this.scaleY, this.scaleZ]);
 
-        this.modelViewMatrix = modelViewMatrix;
+        this.localMatrix = localMatrix;
     }
 
     onUpdate() {
-        this.updateModelViewMatrix();
+        this.updateLocalMatrix();
+        this.updateGlobalMatrix();
     }
 
-    // private updateGlobalMatrix() {
-    //     const globalMatrix = math.mat4.create();
-    //     if (this.gameObject.parent) {
-    //         math.mat4.multiply(globalMatrix, this.gameObject.parent)
-    //     } else {
+    private updateGlobalMatrix() {
+        // const globalMatrix = math.mat4.create();
+        // if (this.gameObject.parent) {
+        //     math.mat4.multiply(globalMatrix, this.gameObject.parent)
+        // } else {
 
-    //     }
-    // }
+        // }
+        this.globalMatrix = this.localMatrix;
+    }
 }
 
 export class MeshRender extends Component {
@@ -120,11 +118,15 @@ export class MeshRender extends Component {
 
     constructor(type?: string) {
         super();
-        if (type) this.modelInfo = getModelInfo(type);
-        this.renderer = new Renderer(this.modelInfo);
+        readObjFile("../assets/objFiles/cube.obj", (text: string) => {
+            const modelInfo = objParser(text);
+            this.modelInfo = modelInfo;
+            this.renderer = new Renderer(modelInfo);
+        });
     }
 
     render(cam: Camera) {
+        if (!this.renderer) return;
         this.renderer.render(this.gameObject.getComponent(Transform), cam);
     }
 

@@ -1,5 +1,8 @@
 import { Component, Transform } from './Components';
 
+const canvas = document.getElementById('game') as HTMLCanvasElement;
+const gl: any = canvas.getContext('webgl2');
+
 let objId = -1;
 
 function createObjId() {
@@ -53,11 +56,13 @@ export class GameObject {
 // 暂时不支持多相机
 // 暂时不支持相机移动
 // 暂时使用单例模型
-export class Camera {
+export class Camera extends GameObject {
     fov: number;    // in randians
     aspect: number;
     zNear: number;
     zFar: number;
+    lookAt: Array<number>;
+    up: Array<number>;
 
     private static instance: Camera;
 
@@ -68,10 +73,20 @@ export class Camera {
         return Camera.instance;
     }
 
-    constructor(fov: number = 45 * Math.PI / 180, aspect: number = 4 / 3, zNear: number = 0.1, zFar: number = 100.0) {
+    constructor(
+        fov: number = 45 * Math.PI / 180,
+        aspect: number = gl.canvas.clientWidth / gl.canvas.clientHeight,
+        zNear: number = 0.1,
+        zFar: number = 50.0,
+        lookAt: Array<number> = [0, 0, 0],
+        up: Array<number> = [0, 1, 0]) {
+        super();
         this.fov = fov;
         this.aspect = aspect;
         this.zNear = zNear;
         this.zFar = zFar;
+        this.lookAt = lookAt;
+        this.up = up;
+        this.getComponent(Transform).z = -8;
     }
 }
